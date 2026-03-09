@@ -1,7 +1,6 @@
 import io
 import os
 import random
-from datetime import datetime
 from pathlib import Path
 
 from flask import Flask, Response, render_template_string, request, send_file
@@ -50,14 +49,14 @@ WEEKLY_TEXTS = [
     'A full week of structured execution and controlled risk.',
     'Weekly performance stayed aligned with a disciplined approach.',
     'Another week focused on consistency, patience and quality setups.',
-    'Steady execution supported the strategy throughout the week.',
+    'Steady execution supported performance throughout the week.',
     'The weekly result reflects discipline and capital-focused trading.',
 ]
 
 MONTHLY_TEXTS = [
     'Monthly performance reflected disciplined execution and risk-first decision making.',
     'The month was managed with a strong focus on consistency and capital protection.',
-    'Structured execution and patience defined the strategy this month.',
+    'Structured execution and patience defined performance this month.',
     'The monthly result highlights steady management through changing market conditions.',
     'This month reinforced a process-driven approach built for sustainable growth.',
 ]
@@ -68,7 +67,7 @@ HTML = '''
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PCM Trading Generator V2</title>
+  <title>PCM Trading Generator V3</title>
   <style>
     body { font-family: Arial, sans-serif; background: #071423; color: #f1f5f9; margin: 0; }
     .wrap { max-width: 920px; margin: 32px auto; padding: 20px; }
@@ -77,18 +76,17 @@ HTML = '''
     label { display: block; margin: 12px 0 6px; color: #cbd5e1; }
     input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #274a76; background: #081423; color: #fff; }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
     button { margin-top: 16px; background: #1d4ed8; color: #fff; border: 0; padding: 14px 18px; border-radius: 12px; cursor: pointer; font-weight: 700; }
     .hint { color: #94a3b8; font-size: 14px; margin-top: 12px; }
-    @media (max-width: 700px) { .row, .row3 { grid-template-columns: 1fr; } }
+    @media (max-width: 700px) { .row { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-      <h1>PCM Trading Generator V2</h1>
-      <p>Daily, weekly and monthly posters in a Telegram-friendly 1080x1350 format. The image is returned as a file download.</p>
-      <p class="hint">Tip: use the same seed each day or week if you want deterministic random text and badges.</p>
+      <h1>PCM Trading Generator V3</h1>
+      <p>Standalone daily, weekly and monthly posters in 1080x1350. The image is returned as a file download.</p>
+      <p class="hint">No strategy label is shown in the artwork. Use the same seed if you want deterministic random text and badges.</p>
     </div>
 
     <div class="card">
@@ -96,16 +94,8 @@ HTML = '''
       <form action="/generate" method="get">
         <label>Result (%)</label>
         <input type="text" name="result" value="3.74" required>
-        <div class="row">
-          <div>
-            <label>Strategy</label>
-            <input type="text" name="strategy" value="Strategy 3">
-          </div>
-          <div>
-            <label>Brand</label>
-            <input type="text" name="brand" value="PCM Trading">
-          </div>
-        </div>
+        <label>Brand</label>
+        <input type="text" name="brand" value="PCM Trading">
         <label>Seed (optional)</label>
         <input type="text" name="seed" placeholder="2026-03-09">
         <button type="submit">Download daily PNG</button>
@@ -121,20 +111,12 @@ HTML = '''
             <input type="text" name="result" value="10.60" required>
           </div>
           <div>
-            <label>Week label</label>
+            <label>Title</label>
             <input type="text" name="period_label" value="Weekly Performance">
           </div>
         </div>
-        <div class="row">
-          <div>
-            <label>Strategy</label>
-            <input type="text" name="strategy" value="Strategy 3">
-          </div>
-          <div>
-            <label>Brand</label>
-            <input type="text" name="brand" value="PCM Trading">
-          </div>
-        </div>
+        <label>Brand</label>
+        <input type="text" name="brand" value="PCM Trading">
         <label>Seed (optional)</label>
         <input type="text" name="seed" placeholder="2026-week-10">
         <button type="submit">Download weekly PNG</button>
@@ -150,34 +132,12 @@ HTML = '''
             <input type="text" name="result" value="12.40" required>
           </div>
           <div>
-            <label>Month label</label>
+            <label>Title</label>
             <input type="text" name="period_label" value="Monthly Performance">
           </div>
         </div>
-        <div class="row3">
-          <div>
-            <label>Trades</label>
-            <input type="text" name="trades" value="42">
-          </div>
-          <div>
-            <label>Win rate (%)</label>
-            <input type="text" name="win_rate" value="68">
-          </div>
-          <div>
-            <label>Drawdown (%)</label>
-            <input type="text" name="drawdown" value="3.10">
-          </div>
-        </div>
-        <div class="row">
-          <div>
-            <label>Strategy</label>
-            <input type="text" name="strategy" value="Strategy 3">
-          </div>
-          <div>
-            <label>Brand</label>
-            <input type="text" name="brand" value="PCM Trading">
-          </div>
-        </div>
+        <label>Brand</label>
+        <input type="text" name="brand" value="PCM Trading">
         <label>Seed (optional)</label>
         <input type="text" name="seed" placeholder="2026-03">
         <button type="submit">Download monthly PNG</button>
@@ -222,9 +182,8 @@ def measure(draw, text, font):
 
 
 def draw_centered(draw, y, text, font, fill, width=WIDTH):
-    tw, th = measure(draw, text, font)
+    tw, _ = measure(draw, text, font)
     draw.text(((width - tw) // 2, y), text, font=font, fill=fill)
-    return tw, th
 
 
 def wrap_text(draw, text, font, max_width):
@@ -345,27 +304,6 @@ def add_candles(base, bullish=True):
     return Image.alpha_composite(base, layer)
 
 
-def add_metric_boxes(base, metrics, accent):
-    layer = Image.new('RGBA', base.size, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(layer)
-    title_font = load_font(22, False)
-    value_font = load_font(34, True)
-    box_y0 = 980
-    box_y1 = 1096
-    gap = 24
-    total_w = WIDTH - 240
-    box_w = int((total_w - 2 * gap) / 3)
-    x = 120
-    for title, value in metrics:
-        draw.rounded_rectangle((x, box_y0, x + box_w, box_y1), radius=22, fill=(7, 20, 42, 220), outline=(41, 82, 140, 90), width=2)
-        ttw, _ = measure(draw, title, title_font)
-        draw.text((x + (box_w - ttw) // 2, box_y0 + 18), title, font=title_font, fill=(169, 188, 219, 240))
-        tx, _ = measure(draw, value, value_font)
-        draw.text((x + (box_w - tx) // 2, box_y0 + 52), value, font=value_font, fill=accent)
-        x += box_w + gap
-    return Image.alpha_composite(base, layer)
-
-
 def choose_daily_copy(value, seed):
     rng = random.Random(seed) if seed else random.Random()
     if value >= 0:
@@ -381,19 +319,18 @@ def choose_period_copy(value, seed, monthly=False):
     return rng.choice(texts), rng.choice(badge_pool), color
 
 
-def render_common_layout(result_text, heading, body_text, badge_text, accent_hex, strategy, brand, badge_y=972, show_badge=True):
+def render_layout(result_text, heading, body_text, badge_text, accent_hex, brand, show_badge=True):
     accent = hex_rgba(accent_hex)
     img = make_background()
     img = add_cards(img)
     img = add_logo(img)
     img = add_candles(img, bullish='-' not in result_text)
 
-    title_font = load_font(54, True)
+    title_font = load_font(56, True)
     result_font = load_font(168, True)
     body_font = load_font(38, False)
     small_font = load_font(28, False)
     brand_font = load_font(36, True)
-    strategy_font = load_font(25, False)
     badge_font = load_font(32, True)
 
     draw = ImageDraw.Draw(img)
@@ -412,7 +349,7 @@ def render_common_layout(result_text, heading, body_text, badge_text, accent_hex
 
     subtext = f'{brand} focuses on disciplined entries, strict risk management and steady execution.'
     sub_lines = wrap_text(draw, subtext, small_font, 720)
-    current_y += 6
+    current_y += 8
     for line in sub_lines[:2]:
         draw_centered(draw, current_y, line, small_font, (190, 206, 228, 235))
         current_y += 38
@@ -421,7 +358,7 @@ def render_common_layout(result_text, heading, body_text, badge_text, accent_hex
         bw, bh = measure(draw, badge_text, badge_font)
         pad_x = 36
         bx0 = (WIDTH - (bw + pad_x * 2)) // 2
-        by0 = badge_y
+        by0 = 972
         bx1 = bx0 + bw + pad_x * 2
         by1 = by0 + bh + 30
         badge_layer = Image.new('RGBA', img.size, (0, 0, 0, 0))
@@ -434,7 +371,6 @@ def render_common_layout(result_text, heading, body_text, badge_text, accent_hex
 
     draw_centered(draw, 1120, 'Copy trading available on Vantage', load_font(28, False), (195, 205, 224, 240))
     draw_centered(draw, 1168, brand, brand_font, (255, 255, 255, 255))
-    draw_centered(draw, 1214, strategy, strategy_font, (160, 181, 212, 230))
     return img
 
 
@@ -446,35 +382,27 @@ def save_image(img):
     return out
 
 
-def generate_daily(result_value, strategy, brand, seed=None):
+def generate_daily(result_value, brand, seed=None):
     value = parse_percent(result_value)
     result_text = f'{value:+.2f}%'
     body_text, badge_text, accent_hex = choose_daily_copy(value, seed)
-    img = render_common_layout(result_text, "TODAY'S RESULT", body_text, badge_text, accent_hex, strategy, brand)
+    img = render_layout(result_text, "TODAY'S RESULT", body_text, badge_text, accent_hex, brand, show_badge=True)
     return save_image(img)
 
 
-def generate_weekly(result_value, strategy, brand, period_label, seed=None):
+def generate_weekly(result_value, brand, period_label, seed=None):
     value = parse_percent(result_value)
     result_text = f'{value:+.2f}%'
     body_text, badge_text, accent_hex = choose_period_copy(value, seed, monthly=False)
-    img = render_common_layout(result_text, period_label.upper(), body_text, badge_text, accent_hex, strategy, brand)
+    img = render_layout(result_text, period_label.upper(), body_text, badge_text, accent_hex, brand, show_badge=True)
     return save_image(img)
 
 
-def generate_monthly(result_value, strategy, brand, period_label, trades, win_rate, drawdown, seed=None):
+def generate_monthly(result_value, brand, period_label, seed=None):
     value = parse_percent(result_value)
     result_text = f'{value:+.2f}%'
     body_text, badge_text, accent_hex = choose_period_copy(value, seed, monthly=True)
-    img = render_common_layout(result_text, period_label.upper(), body_text, badge_text, accent_hex, strategy, brand, show_badge=False)
-    accent = hex_rgba(accent_hex)
-    drawdown_val = f'-{abs(parse_percent(drawdown)):.2f}%'
-    metrics = [
-        ('TRADES', str(trades).strip()),
-        ('WIN RATE', f'{parse_percent(win_rate):.0f}%'),
-        ('DRAWDOWN', drawdown_val),
-    ]
-    img = add_metric_boxes(img, metrics, accent)
+    img = render_layout(result_text, period_label.upper(), body_text, badge_text, accent_hex, brand, show_badge=False)
     return save_image(img)
 
 
@@ -496,11 +424,10 @@ def health():
 @app.route('/generate')
 def generate():
     result_value = request.args.get('result', '0')
-    strategy = request.args.get('strategy', 'Strategy 3').strip() or 'Strategy 3'
     brand = request.args.get('brand', 'PCM Trading').strip() or 'PCM Trading'
     seed = request.args.get('seed', '').strip() or None
     try:
-        image_io = generate_daily(result_value, strategy, brand, seed)
+        image_io = generate_daily(result_value, brand, seed)
     except Exception as exc:
         return Response(f'Invalid input: {exc}', status=400, mimetype='text/plain')
     return send_file(image_io, mimetype='image/png', as_attachment=True, download_name=make_filename('pcm_daily', result_value))
@@ -509,12 +436,11 @@ def generate():
 @app.route('/generate/weekly')
 def generate_weekly_route():
     result_value = request.args.get('result', '0')
-    strategy = request.args.get('strategy', 'Strategy 3').strip() or 'Strategy 3'
     brand = request.args.get('brand', 'PCM Trading').strip() or 'PCM Trading'
     period_label = request.args.get('period_label', 'Weekly Performance').strip() or 'Weekly Performance'
     seed = request.args.get('seed', '').strip() or None
     try:
-        image_io = generate_weekly(result_value, strategy, brand, period_label, seed)
+        image_io = generate_weekly(result_value, brand, period_label, seed)
     except Exception as exc:
         return Response(f'Invalid input: {exc}', status=400, mimetype='text/plain')
     return send_file(image_io, mimetype='image/png', as_attachment=True, download_name=make_filename('pcm_weekly', result_value))
@@ -523,15 +449,11 @@ def generate_weekly_route():
 @app.route('/generate/monthly')
 def generate_monthly_route():
     result_value = request.args.get('result', '0')
-    strategy = request.args.get('strategy', 'Strategy 3').strip() or 'Strategy 3'
     brand = request.args.get('brand', 'PCM Trading').strip() or 'PCM Trading'
     period_label = request.args.get('period_label', 'Monthly Performance').strip() or 'Monthly Performance'
-    trades = request.args.get('trades', '0').strip() or '0'
-    win_rate = request.args.get('win_rate', '0').strip() or '0'
-    drawdown = request.args.get('drawdown', '0').strip() or '0'
     seed = request.args.get('seed', '').strip() or None
     try:
-        image_io = generate_monthly(result_value, strategy, brand, period_label, trades, win_rate, drawdown, seed)
+        image_io = generate_monthly(result_value, brand, period_label, seed)
     except Exception as exc:
         return Response(f'Invalid input: {exc}', status=400, mimetype='text/plain')
     return send_file(image_io, mimetype='image/png', as_attachment=True, download_name=make_filename('pcm_monthly', result_value))

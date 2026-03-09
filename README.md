@@ -1,14 +1,16 @@
-# PCM Trading Result Generator
+# PCM Trading Generator V2
 
-Telegram-ready daily result image generator for PCM Trading.
+Telegram-ready image generator for PCM Trading, built for GitHub + Render.
 
-## Features
+## What it does
 
-- 1080x1350 PNG output
-- Profit / loss layout with random text variation
-- Random badge variation
-- Uses your PCM logo
-- Ready for GitHub + Render
+- Generates a **daily** result poster in 1080x1350 PNG
+- Generates a **weekly** result poster in 1080x1350 PNG
+- Generates a **monthly** performance poster in 1080x1350 PNG
+- Uses 5 randomized profit texts and 5 randomized loss texts for daily posts
+- Randomizes badges for variation
+- Uses your selected PCM logo
+- Returns the PNG as a **downloaded file automatically** in the browser
 
 ## Local run
 
@@ -28,19 +30,34 @@ http://127.0.0.1:5000/
 1. Push this folder to a GitHub repo.
 2. In Render, create a new **Web Service** from the repo.
 3. Render should detect `render.yaml` automatically.
-4. If needed, use:
+4. If needed, use these values manually:
 
 ```bash
 Build Command: pip install -r requirements.txt
 Start Command: gunicorn --bind 0.0.0.0:$PORT app:app
 ```
 
-## URL usage
+## Example URLs
 
-Example:
+### Daily
 
 ```text
-/generate?result=3.74&strategy=Strategy%203&brand=PCM%20Trading&date_label=March%209,%202026&seed=2026-03-09
+/generate?result=3.74&strategy=Strategy%203&brand=PCM%20Trading&seed=2026-03-09
 ```
 
-Use a fixed `seed` value for the day if you want the same random text/badge every time you generate that specific day.
+### Weekly
+
+```text
+/generate/weekly?result=10.60&period_label=Weekly%20Performance&strategy=Strategy%203&brand=PCM%20Trading&seed=2026-week-10
+```
+
+### Monthly
+
+```text
+/generate/monthly?result=12.40&period_label=Monthly%20Performance&trades=42&win_rate=68&drawdown=3.10&strategy=Strategy%203&brand=PCM%20Trading&seed=2026-03
+```
+
+## Notes
+
+- Use a fixed `seed` if you want the same random text and badge for the same day, week, or month.
+- The PNG is returned with `as_attachment=True`, so it downloads instead of opening inline.

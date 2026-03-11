@@ -15,17 +15,17 @@ HEIGHT = 1350
 
 DAILY_PROFIT_TEXTS = [
     'Disciplined execution delivered another solid session.',
-    'High-probability setups played out well today.',
+    'High-probability setups played out well yesterday.',
     'Clean entries and controlled risk led to a strong finish.',
     'Another steady session focused on consistency and risk control.',
-    'The strategy performed with discipline and stability today.',
+    'The strategy performed with discipline and stability yesterday.',
 ]
 
 DAILY_LOSS_TEXTS = [
     'A defensive session with risk kept under control.',
     'Not every day is green. Capital protection comes first.',
     'A small setback, but discipline and risk management held.',
-    'Market conditions were tougher today, but the strategy stayed controlled.',
+    'Market conditions were tougher yesterday, but the strategy stayed controlled.',
     'A controlled drawdown with focus on protecting capital.',
 ]
 
@@ -386,7 +386,7 @@ def generate_daily(result_value, brand, seed=None):
     value = parse_percent(result_value)
     result_text = f'{value:+.2f}%'
     body_text, badge_text, accent_hex = choose_daily_copy(value, seed)
-    img = render_layout(result_text, "TODAY'S RESULT", body_text, badge_text, accent_hex, brand, show_badge=True)
+    img = render_layout(result_text, "YESTERDAY'S RESULT", body_text, badge_text, accent_hex, brand, show_badge=True)
     return save_image(img)
 
 
